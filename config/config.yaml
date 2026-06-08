@@ -364,11 +364,11 @@ ai:
   # 完整列表: https://docs.litellm.ai/docs/providers
   # 如果你对于看英文文档比较头疼，那么可以点击页面右下角的 【Ask AI】 ,用中文询问怎么配置
 
-  model: "deepseek/deepseek-v4-flash"
+  model: "openai/moonshot-v1-auto"
 
-  api_key: ""                       # API Key（建议使用环境变量 AI_API_KEY）
-  
-  api_base: ""                      # 自定义 API 地址（可选，绝大多数情况留空即可）
+  api_key: ""                       # API Key（由 GitHub Secrets AI_API_KEY 注入）
+
+  api_base: "https://api.moonshot.cn/v1"
                                     #
                                     # ❓ 什么时候需要填？
                                     #    当你使用的 AI 服务商不在上方支持列表中时。
@@ -412,7 +412,7 @@ ai:
 # 9. AI 分析功能（模型配置见上方 ai 段）
 # ===============================================================
 ai_analysis:
-  enabled: false                    # 未配置 AI API key，暂时关闭
+  enabled: true                     # Kimi K2.6 API
                                     # 开启 schedule 后此项仍为总开关：false=永远不分析，true=由调度控制
 
   language: "Chinese"               # 分析报告语言（如 "English", "Korean", "法语"）
