@@ -123,7 +123,7 @@ jobs:
 
       - name: Install dependencies
         if: success()
-        run: uv sync --frozen --no-dev
+        run: uv sync --no-dev
 
       - name: Verify required files
         if: success()
