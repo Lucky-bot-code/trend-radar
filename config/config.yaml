@@ -434,7 +434,7 @@ ai_translation:
 
   # 翻译范围（display.regions 关闭的区域即使开启也不会翻译）
   scope:
-    hotlist: false                  # 翻译热榜标题（true=翻译, false=不翻译）
+    hotlist: true                  # 翻译热榜标题（true=翻译, false=不翻译）
     rss: true                       # 翻译 RSS 标题（true=翻译, false=不翻译）
     standalone: true                # 翻译独立展示区标题（true=翻译, false=不翻译）
 
