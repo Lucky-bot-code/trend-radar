@@ -428,8 +428,8 @@ ai_analysis:
 # 对推送标题进行翻译，不包含 AI 分析的内容
 # ===============================================================
 ai_translation:
-  enabled: false                    # 未配置 AI API key，暂时关闭
-  language: "中文"                   # 翻译目标语言（如 "English", "Korean", "法语"）
+  enabled: true                     # Kimi K2.6 自动翻译
+  language: "中文"                   # 翻译目标语言
   prompt_file: "ai_translation_prompt.txt"   # 提示词文件（相对于 config 目录）
 
   # 翻译范围（display.regions 关闭的区域即使开启也不会翻译）
