@@ -27,6 +27,7 @@ def render_html_content(
     standalone_data: Optional[Dict] = None,
     ai_analysis: Optional[Any] = None,
     show_new_section: bool = True,
+    events_data: Optional[List[Dict]] = None,
 ) -> str:
     """渲染HTML内容
 
@@ -48,7 +49,7 @@ def render_html_content(
         渲染后的 HTML 字符串
     """
     # 默认区域顺序
-    default_region_order = ["hotlist", "rss", "new_items", "standalone", "ai_analysis"]
+    default_region_order = ["hotlist", "rss", "new_items", "standalone", "calendar", "ai_analysis"]
     if region_order is None:
         region_order = default_region_order
 
@@ -1409,6 +1410,44 @@ def render_html_content(
             body.dark-mode .badge-new {
                 background: linear-gradient(135deg, #be185d, #9333ea);
             }
+
+            /* ===== 未来事件日历 ===== */
+            .calendar-section { margin-top: 32px; padding-top: 24px; border-top: 2px solid #e5e7eb; }
+            .calendar-title { font-size: 18px; font-weight: 700; color: #1a1a1a; margin: 0 0 20px 0; display: flex; align-items: center; gap: 8px; }
+            .calendar-title .cal-icon { font-size: 22px; }
+            .calendar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+            .cal-month-card { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; transition: box-shadow 0.2s; }
+            .cal-month-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+            .cal-month-header { padding: 14px 18px; font-size: 15px; font-weight: 700; color: #fff; display: flex; align-items: center; justify-content: space-between; }
+            .cal-month-06, .cal-month-07, .cal-month-08 { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
+            .cal-month-09, .cal-month-10 { background: linear-gradient(135deg, #ea580c, #dc2626); }
+            .cal-month-11, .cal-month-12 { background: linear-gradient(135deg, #0891b2, #0e7490); }
+            .cal-event-list { padding: 8px 0; }
+            .cal-event { display: flex; align-items: flex-start; gap: 12px; padding: 10px 18px; border-bottom: 1px solid #f5f5f5; transition: background 0.15s; }
+            .cal-event:last-child { border-bottom: none; }
+            .cal-event:hover { background: #fafbff; }
+            .cal-event-date { min-width: 40px; height: 40px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #4f46e5; background: #eef2ff; flex-shrink: 0; }
+            .cal-event-date span { font-size: 9px; font-weight: 500; color: #6b7280; }
+            .cal-event-body { flex: 1; min-width: 0; }
+            .cal-event-title { font-size: 14px; font-weight: 600; color: #1a1a1a; margin: 0 0 4px 0; }
+            .cal-event-desc { font-size: 12px; color: #6b7280; margin: 0; }
+            .cal-event-tags { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+            .cal-tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+            .cal-tag-high { background: #fef2f2; color: #dc2626; }
+            .cal-tag-medium { background: #fffbeb; color: #d97706; }
+            .cal-tag-low { background: #f0fdf4; color: #16a34a; }
+            .cal-tag-global { background: #eff6ff; color: #2563eb; }
+            .cal-tag-us { background: #fefce8; color: #a16207; }
+            .cal-tag-cn { background: #fef2f2; color: #dc2626; }
+            .cal-tag-eu { background: #f5f3ff; color: #7c3aed; }
+            .cal-tag-jp { background: #f0fdf4; color: #0d9488; }
+            body.dark-mode .cal-month-card { background: #1a1b2e; border-color: #2d2e3d; }
+            body.dark-mode .cal-month-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+            body.dark-mode .cal-event { border-color: #2d2e3d; }
+            body.dark-mode .cal-event:hover { background: #22223a; }
+            body.dark-mode .cal-event-title { color: #e5e7eb; }
+            body.dark-mode .cal-event-date { background: #312e81; color: #a5b4fc; }
+            @media (max-width: 700px) { .calendar-grid { grid-template-columns: 1fr; } }
         </style>
     </head>
     <body>
@@ -2131,6 +2170,80 @@ def render_html_content(
                 </div>"""
         return standalone_html
 
+    def render_calendar_html(data: Optional[List[Dict]]) -> str:
+        """渲染未来事件日历 HTML"""
+        if not data:
+            return ""
+
+        now = datetime.now()
+        current_month = now.month
+        current_day = now.day
+
+        months_cn = {
+            "01": "一月", "02": "二月", "03": "三月", "04": "四月",
+            "05": "五月", "06": "六月", "07": "七月", "08": "八月",
+            "09": "九月", "10": "十月", "11": "十一月", "12": "十二月",
+        }
+
+        region_labels = {"全球": "cal-tag-global", "美国": "cal-tag-us", "中国": "cal-tag-cn",
+                         "欧洲": "cal-tag-eu", "日本": "cal-tag-jp"}
+        importance_labels = {"high": "cal-tag-high", "medium": "cal-tag-medium", "low": "cal-tag-low"}
+
+        cards = []
+        for month_data in data:
+            month_key = month_data["month"]
+            month_num = month_key[-2:]
+            month_name = months_cn.get(month_num, month_key)
+            year_num = month_key[:4]
+            is_current = int(month_num) == current_month
+
+            events_html = ""
+            for ev in month_data["events"]:
+                date_str = ev["date"]
+                full_date = f"{year_num}-{date_str}"
+                title_escaped = html_escape(ev["title"])
+                desc = ev.get("description", "")
+                desc_html = f'<p class="cal-event-desc">{html_escape(desc)}</p>' if desc else ""
+                region = ev.get("region", "")
+                importance = ev.get("importance", "medium")
+                region_cls = region_labels.get(region, "cal-tag-us")
+                imp_cls = importance_labels.get(importance, "cal-tag-medium")
+                imp_cn = {"high": "重要", "medium": "关注", "low": "一般"}.get(importance, "关注")
+
+                events_html += f"""
+                            <div class="cal-event">
+                                <div class="cal-event-date">{date_str[-2:]}<span>{month_num}月</span></div>
+                                <div class="cal-event-body">
+                                    <p class="cal-event-title">{title_escaped}</p>
+                                    {desc_html}
+                                    <div class="cal-event-tags">
+                                        <span class="cal-tag {imp_cls}">{imp_cn}</span>
+                                        <span class="cal-tag {region_cls}">{region}</span>
+                                    </div>
+                                </div>
+                            </div>"""
+
+            month_header_cls = f"cal-month-{month_num}"
+            current_badge = ' <span style="font-size:11px;opacity:0.85;">● 本月</span>' if is_current else ""
+            cards.append(f"""
+                    <div class="cal-month-card">
+                        <div class="cal-month-header {month_header_cls}">
+                            {year_num}年{month_name}{current_badge}
+                            <span style="font-size:12px;opacity:0.7;">{len(month_data['events'])} 件事</span>
+                        </div>
+                        <div class="cal-event-list">{events_html}
+                        </div>
+                    </div>""")
+
+        return f"""
+                <div class="calendar-section" id="calendar">
+                    <div class="calendar-title">
+                        <span class="cal-icon">📅</span> 未来事件预告
+                    </div>
+                    <div class="calendar-grid">{''.join(cards)}
+                    </div>
+                </div>"""
+
     # 生成 RSS 统计和新增 HTML
     rss_stats_html = render_rss_stats_html(rss_items, "RSS 订阅更新") if rss_items else ""
     rss_new_html = render_rss_stats_html(rss_new_items, "RSS 新增更新") if rss_new_items else ""
@@ -2141,6 +2254,9 @@ def render_html_content(
     # 生成 AI 分析 HTML
     ai_html = render_ai_analysis_html_rich(ai_analysis) if ai_analysis else ""
 
+    # 生成事件日历 HTML
+    calendar_html = render_calendar_html(events_data)
+
     # 准备各区域内容映射
     region_contents = {
         "hotlist": stats_html,
@@ -2148,6 +2264,7 @@ def render_html_content(
         "new_items": (new_titles_html, rss_new_html),  # 元组，分别处理
         "standalone": standalone_html,
         "ai_analysis": ai_html,
+        "calendar": calendar_html,
     }
 
     def add_section_divider(content: str) -> str:

@@ -284,6 +284,32 @@ class AppContext:
 
     # === 报告生成 ===
 
+    def load_events_calendar(self) -> Optional[List[Dict]]:
+        """加载未来事件日历数据"""
+        import yaml
+        events_path = Path("config") / "events_calendar.yaml"
+        if not events_path.exists():
+            print("[日历] 未找到事件日历文件")
+            return None
+        try:
+            with open(events_path, "r", encoding="utf-8") as f:
+                config = yaml.safe_load(f)
+            if not config or "events" not in config:
+                return None
+            raw = config["events"]
+            events_list = []
+            for month_key in sorted(raw.keys()):
+                month_events = raw[month_key]
+                events_list.append({
+                    "month": month_key,
+                    "events": month_events,
+                })
+            print(f"[日历] 已加载 {sum(len(m['events']) for m in events_list)} 个未来事件，覆盖 {len(events_list)} 个月")
+            return events_list
+        except Exception as e:
+            print(f"[日历] 加载失败: {e}")
+            return None
+
     def prepare_report(
         self,
         stats: List[Dict],
@@ -321,6 +347,7 @@ class AppContext:
         report_metadata: Optional[Dict] = None,
     ) -> str:
         """生成HTML报告"""
+        events_data = self.load_events_calendar()
         return generate_html_report(
             stats=stats,
             total_titles=total_titles,
@@ -333,7 +360,7 @@ class AppContext:
             output_dir="output",
             date_folder=self.format_date(),
             time_filename=self.format_time(),
-            render_html_func=lambda *args, **kwargs: self.render_html(*args, rss_items=rss_items, rss_new_items=rss_new_items, ai_analysis=ai_analysis, standalone_data=standalone_data, **kwargs),
+            render_html_func=lambda *args, **kwargs: self.render_html(*args, rss_items=rss_items, rss_new_items=rss_new_items, ai_analysis=ai_analysis, standalone_data=standalone_data, events_data=events_data, **kwargs),
             report_metadata=report_metadata,
         )
 
@@ -347,6 +374,7 @@ class AppContext:
         rss_new_items: Optional[List[Dict]] = None,
         ai_analysis: Optional[Any] = None,
         standalone_data: Optional[Dict] = None,
+        events_data: Optional[List[Dict]] = None,
     ) -> str:
         """渲染HTML内容"""
         return render_html_content(
@@ -362,6 +390,7 @@ class AppContext:
             ai_analysis=ai_analysis,
             show_new_section=self.show_new_section,
             standalone_data=standalone_data,
+            events_data=events_data,
         )
 
     # === 通知内容渲染 ===
