@@ -2177,7 +2177,15 @@ def render_html_content(
 
         now = datetime.now()
         current_month = now.month
-        current_day = now.day
+        current_year = now.year
+
+        # 只显示当月 + 下月
+        next_month = current_month % 12 + 1
+        allowed = {
+            f"{current_year}-{current_month:02d}",
+            f"{current_year if next_month > current_month else current_year + 1}-{next_month:02d}",
+        }
+        data = [m for m in data if m["month"] in allowed]
 
         months_cn = {
             "01": "一月", "02": "二月", "03": "三月", "04": "四月",

@@ -543,6 +543,7 @@ class NewsAnalyzer:
                 platforms=platforms,
                 keywords=keywords,
                 standalone_data=standalone_data,
+                events_data=self.ctx.load_events_calendar(),
             )
 
             # 设置 AI 分析使用的模式

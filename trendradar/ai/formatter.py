@@ -101,6 +101,11 @@ def render_ai_analysis_markdown(result: AIAnalysisResult) -> str:
             ["**RSS 深度洞察**", _format_list_content(result.rss_insights), ""]
         )
 
+    if result.event_impact:
+        lines.extend(
+            ["**未来事件市场影响**", _format_list_content(result.event_impact), ""]
+        )
+
     if result.outlook_strategy:
         lines.extend(
             ["**研判策略建议**", _format_list_content(result.outlook_strategy), ""]
@@ -137,6 +142,11 @@ def render_ai_analysis_feishu(result: AIAnalysisResult) -> str:
     if result.rss_insights:
         lines.extend(
             ["**RSS 深度洞察**", _format_list_content(result.rss_insights), ""]
+        )
+
+    if result.event_impact:
+        lines.extend(
+            ["**未来事件市场影响**", _format_list_content(result.event_impact), ""]
         )
 
     if result.outlook_strategy:
@@ -183,6 +193,11 @@ def render_ai_analysis_dingtalk(result: AIAnalysisResult) -> str:
             ["#### RSS 深度洞察", _format_list_content(result.rss_insights), ""]
         )
 
+    if result.event_impact:
+        lines.extend(
+            ["#### 未来事件市场影响", _format_list_content(result.event_impact), ""]
+        )
+
     if result.outlook_strategy:
         lines.extend(
             ["#### 研判策略建议", _format_list_content(result.outlook_strategy), ""]
@@ -218,6 +233,9 @@ def render_ai_analysis_plain(result: AIAnalysisResult) -> str:
 
     if result.rss_insights:
         lines.extend(["[RSS 深度洞察]", _format_list_content(result.rss_insights), ""])
+
+    if result.event_impact:
+        lines.extend(["[未来事件市场影响]", _format_list_content(result.event_impact), ""])
 
     if result.outlook_strategy:
         lines.extend(["[研判策略建议]", _format_list_content(result.outlook_strategy), ""])
@@ -255,6 +273,9 @@ def render_ai_analysis_telegram(result: AIAnalysisResult) -> str:
 
     if result.rss_insights:
         lines.extend(["<b>RSS 深度洞察</b>", _escape_html(_format_list_content(result.rss_insights)), ""])
+
+    if result.event_impact:
+        lines.extend(["<b>未来事件市场影响</b>", _escape_html(_format_list_content(result.event_impact)), ""])
 
     if result.outlook_strategy:
         lines.extend(["<b>研判策略建议</b>", _escape_html(_format_list_content(result.outlook_strategy)), ""])
@@ -341,6 +362,15 @@ def render_ai_analysis_html_rich(result: AIAnalysisResult) -> str:
         ai_html += f"""
                     <div class="ai-block">
                         <div class="ai-block-title">RSS 深度洞察</div>
+                        <div class="ai-block-content">{content_html}</div>
+                    </div>"""
+
+    if result.event_impact:
+        content = _format_list_content(result.event_impact)
+        content_html = _escape_html(content).replace("\n", "<br>")
+        ai_html += f"""
+                    <div class="ai-block">
+                        <div class="ai-block-title">未来事件市场影响</div>
                         <div class="ai-block-content">{content_html}</div>
                     </div>"""
 

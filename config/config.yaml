@@ -353,7 +353,7 @@ ai:
 
   model: "openai/moonshot-v1-auto"
 
-  api_key: ""                       # API Key（由 GitHub Secrets AI_API_KEY 注入）
+  api_key: "sk-fgI1Ts2v97nxlsSLRK81Fhlua2WyG4X0txHWameVtcU7oZA7"
 
   api_base: "https://api.moonshot.cn/v1"
                                     #

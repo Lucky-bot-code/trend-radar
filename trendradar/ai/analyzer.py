@@ -22,6 +22,7 @@ class AIAnalysisResult:
     sentiment_controversy: str = ""      # 舆论风向与争议
     signals: str = ""                    # 异动与弱信号
     rss_insights: str = ""               # RSS 深度洞察
+    event_impact: str = ""               # 未来事件市场影响预判
     outlook_strategy: str = ""           # 研判与策略建议
     standalone_summaries: Dict[str, str] = field(default_factory=dict)  # 独立展示区概括 {源ID: 概括}
 
@@ -99,6 +100,7 @@ class AIAnalyzer:
         platforms: Optional[List[str]] = None,
         keywords: Optional[List[str]] = None,
         standalone_data: Optional[Dict] = None,
+        events_data: Optional[List[Dict]] = None,
     ) -> AIAnalysisResult:
         """
         执行 AI 分析
@@ -180,6 +182,10 @@ class AIAnalyzer:
         if self.include_standalone and standalone_data:
             standalone_content, standalone_count = self._prepare_standalone_content(standalone_data)
         user_prompt = user_prompt.replace("{standalone_content}", standalone_content)
+
+        # 构建未来事件预告内容
+        events_content = self._prepare_events_content(events_data)
+        user_prompt = user_prompt.replace("{events_calendar}", events_content)
 
         if self.debug:
             print("\n" + "=" * 80)
@@ -545,6 +551,51 @@ class AIAnalyzer:
         )
         return "\n".join(lines), standalone_count
 
+    def _prepare_events_content(self, events_data: Optional[List[Dict]]) -> str:
+        """将未来事件日历转为简洁文本，注入 AI 分析 prompt"""
+        if not events_data:
+            return "暂无近期重大事件数据"
+
+        from datetime import datetime
+        now = datetime.now()
+        current_month = now.month
+        current_year = now.year
+
+        lines = []
+        for month_data in events_data:
+            month_key = month_data.get("month", "")
+            month_num = int(month_key[-2:])
+            year_num = int(month_key[:4])
+
+            events = month_data.get("events", [])
+            if not events:
+                continue
+
+            # 标注本月/下月
+            if month_num == current_month:
+                label = "本月"
+            elif month_num == (current_month % 12 + 1):
+                label = "下月"
+            else:
+                continue  # 只发给 AI 当月+下月，避免 token 浪费
+
+            lines.append(f"\n### {label} ({year_num}年{month_num}月)")
+            for ev in events:
+                date = ev.get("date", "")
+                title = ev.get("title", "")
+                importance = ev.get("importance", "medium")
+                region = ev.get("region", "")
+                desc = ev.get("description", "")
+                imp_tag = {"high": "★", "medium": "·", "low": " "}.get(importance, "·")
+                region_tag = f"[{region}]" if region else ""
+                desc_text = f" — {desc}" if desc else ""
+                lines.append(f"{imp_tag} {date} {title} {region_tag}{desc_text}")
+
+        if len(lines) <= 1:  # only the header, no actual events
+            return "暂无近期重大事件数据"
+
+        return "\n".join(lines)
+
     def _parse_response(self, response: str) -> AIAnalysisResult:
         """解析 AI 响应"""
         result = AIAnalysisResult(raw_response=response)
@@ -617,6 +668,7 @@ class AIAnalyzer:
             result.sentiment_controversy = data.get("sentiment_controversy", "")
             result.signals = data.get("signals", "")
             result.rss_insights = data.get("rss_insights", "")
+            result.event_impact = data.get("event_impact", "")
             result.outlook_strategy = data.get("outlook_strategy", "")
 
             # 解析独立展示区概括
