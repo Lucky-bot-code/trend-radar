@@ -2,6 +2,10 @@ name: Get Hot News
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "40 0 * * *"   # 08:40 Beijing - 早间汇总（A股盘前 + 美股隔夜总结）
+    - cron: "45 10 * * *"  # 18:45 Beijing - 晚间速览（美股盘前准备）
+    - cron: "40 12 * * *"  # 20:40 Beijing - 全天总结（AI 深度汇总）
 
 concurrency:
   group: crawler-${{ github.ref_name }}
