@@ -3,12 +3,12 @@ name: Get Hot News
 on:
   workflow_dispatch:
   schedule:
-    - cron: "40 0 * * *"   # 08:40 Beijing - 早间汇总（A股盘前 + 美股隔夜总结）
-    - cron: "45 10 * * *"  # 18:45 Beijing - 晚间速览（美股盘前准备）
-    - cron: "40 12 * * *"  # 20:40 Beijing - 全天总结（AI 深度汇总）
+    - cron: "29 21 * * *"  # 05:29 Beijing (提前3.5h补偿GH Actions延迟, 预计~09:00到达) - 早间汇总
+    - cron: "24 7 * * *"   # 15:24 Beijing (提前3.5h补偿GH Actions延迟, 预计~18:55到达) - 晚间速览
+    - cron: "29 9 * * *"   # 17:29 Beijing (提前3.5h补偿GH Actions延迟, 预计~21:00到达) - 全天总结
 
 concurrency:
-  group: crawler-${{ github.ref_name }}
+  group: crawler-${{ github.ref_name }}-${{ github.event.schedule || 'manual' }}
   cancel-in-progress: true
 
 permissions:
