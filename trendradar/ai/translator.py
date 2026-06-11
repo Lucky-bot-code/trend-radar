@@ -6,6 +6,7 @@ AI 翻译器模块
 基于 LiteLLM 统一接口，支持 100+ AI 提供商
 """
 
+import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
@@ -200,9 +201,24 @@ class AITranslator:
 
         except Exception as e:
             error_msg = f"批量翻译失败: {type(e).__name__}: {str(e)[:100]}"
-            for idx in non_empty_indices:
-                batch_result.results[idx].error = error_msg
-            batch_result.fail_count = len(non_empty_indices)
+            print(f"[翻译] {error_msg}，降级为逐条翻译...")
+            # 降级：逐条翻译，单条请求更轻量，不容易触发限流
+            for i, idx in enumerate(non_empty_indices):
+                try:
+                    single_result = self.translate(non_empty_texts[i])
+                    if single_result.success:
+                        batch_result.results[idx].translated_text = single_result.translated_text
+                        batch_result.results[idx].success = True
+                        batch_result.success_count += 1
+                    else:
+                        batch_result.results[idx].error = single_result.error
+                        batch_result.fail_count += 1
+                except Exception as single_e:
+                    batch_result.results[idx].error = f"逐条翻译失败: {type(single_e).__name__}"
+                    batch_result.fail_count += 1
+                # 逐条之间加间隔，避免连续请求触发限流
+                if i < len(non_empty_indices) - 1:
+                    time.sleep(1)
 
         return batch_result
 

@@ -7,9 +7,11 @@ AI 客户端模块
 """
 
 import os
+import time
 from typing import Any, Dict, List
 
 from litellm import completion
+from litellm.exceptions import RateLimitError
 
 
 class AIClient:
@@ -88,8 +90,18 @@ class AIClient:
             if key not in params:
                 params[key] = value
 
-        # 调用 LiteLLM
-        response = completion(**params)
+        # 调用 LiteLLM（带限流重试）
+        max_rate_limit_retries = 3
+        for attempt in range(max_rate_limit_retries + 1):
+            try:
+                response = completion(**params)
+                break
+            except RateLimitError:
+                if attempt == max_rate_limit_retries:
+                    raise
+                delay = (2 ** attempt) * 5  # 5s, 10s, 20s
+                print(f"[AI] 限流重试 ({attempt + 1}/{max_rate_limit_retries})，等待 {delay}s...")
+                time.sleep(delay)
 
         # 提取响应内容
         # 某些模型/提供商返回 list（内容块）而非 str，统一转为 str
