@@ -464,10 +464,11 @@ custom:
       name: "晚间速览"
       start: "18:35"
       end: "19:15"
-      analyze: false
+      analyze: true
       push: true
       report_mode: "current"
       once:
+        analyze: true
         push: true
 
     night_summary:
